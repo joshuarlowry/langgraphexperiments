@@ -68,6 +68,22 @@ class OllamaAgent:
         response = self.chat(messages, **kwargs)
         return response.get("choices", [{}])[0].get("message", {}).get("content", "")
     
+    def list_models(self) -> List[str]:
+        """
+        List all available models on the Ollama server.
+        
+        Returns:
+            A list of model names
+        """
+        url = f"{self.base_url}/api/tags"
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            models = response.json().get("models", [])
+            return [model["name"] for model in models]
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"Error listing models from Ollama API: {str(e)}")
+    
     def langgraph_node(self, state_key_in: str = "input", state_key_out: str = "output"):
         """
         Create a LangGraph-compatible node function that uses this agent.
@@ -109,6 +125,15 @@ if __name__ == "__main__":
     
     # Create an Ollama agent
     agent = OllamaAgent(model="llama2")
+    
+    # List available models
+    try:
+        print("Available models:")
+        models = agent.list_models()
+        for model in models:
+            print(f"- {model}")
+    except Exception as e:
+        print(f"Error listing models: {e}")
     
     # Create a simple graph
     workflow = StateGraph(State)
