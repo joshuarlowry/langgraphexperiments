@@ -24,7 +24,6 @@ class DiceTools:
     @staticmethod
     def roll_d2(count: int = 1) -> str:
         """Roll a 2-sided die (coin flip)"""
-        print("Rolling d2...")
         rolls = [random.randint(1, 2) for _ in range(count)]
         total = sum(rolls)
         result = {
@@ -33,13 +32,11 @@ class DiceTools:
             "dice_type": "d2",
             "count": count
         }
-        print(f"d2 result: {result}")
         return json.dumps(result)
     
     @staticmethod
     def roll_d4(count: int = 1) -> str:
         """Roll a 4-sided die"""
-        print("Rolling d4...")
         rolls = [random.randint(1, 4) for _ in range(count)]
         total = sum(rolls)
         result = {
@@ -48,13 +45,11 @@ class DiceTools:
             "dice_type": "d4",
             "count": count
         }
-        print(f"d4 result: {result}")
         return json.dumps(result)
     
     @staticmethod
     def roll_d6(count: int = 1) -> str:
         """Roll a 6-sided die"""
-        print("Rolling d6...")
         rolls = [random.randint(1, 6) for _ in range(count)]
         total = sum(rolls)
         result = {
@@ -63,13 +58,11 @@ class DiceTools:
             "dice_type": "d6",
             "count": count
         }
-        print(f"d6 result: {result}")
         return json.dumps(result)
     
     @staticmethod
     def roll_d8(count: int = 1) -> str:
         """Roll an 8-sided die"""
-        print("Rolling d8...")
         rolls = [random.randint(1, 8) for _ in range(count)]
         total = sum(rolls)
         result = {
@@ -78,13 +71,11 @@ class DiceTools:
             "dice_type": "d8",
             "count": count
         }
-        print(f"d8 result: {result}")
         return json.dumps(result)
     
     @staticmethod
     def roll_d10(count: int = 1) -> str:
         """Roll a 10-sided die"""
-        print("Rolling d10...")
         rolls = [random.randint(1, 10) for _ in range(count)]
         total = sum(rolls)
         result = {
@@ -93,13 +84,11 @@ class DiceTools:
             "dice_type": "d10",
             "count": count
         }
-        print(f"d10 result: {result}")
         return json.dumps(result)
     
     @staticmethod
     def roll_d12(count: int = 1) -> str:
         """Roll a 12-sided die"""
-        print("Rolling d12...")
         rolls = [random.randint(1, 12) for _ in range(count)]
         total = sum(rolls)
         result = {
@@ -108,13 +97,11 @@ class DiceTools:
             "dice_type": "d12",
             "count": count
         }
-        print(f"d12 result: {result}")
         return json.dumps(result)
     
     @staticmethod
     def roll_d20(count: int = 1) -> str:
         """Roll a 20-sided die"""
-        print("Rolling d20...")
         rolls = [random.randint(1, 20) for _ in range(count)]
         total = sum(rolls)
         
@@ -130,13 +117,11 @@ class DiceTools:
             "critical_hit": has_crit_hit,
             "critical_fail": has_crit_fail
         }
-        print(f"d20 result: {result}")
         return json.dumps(result)
     
     @staticmethod
     def roll_d100(count: int = 1) -> str:
         """Roll a 100-sided die (percentile dice)"""
-        print("Rolling d100...")
         rolls = [random.randint(1, 100) for _ in range(count)]
         total = sum(rolls)
         result = {
@@ -145,9 +130,7 @@ class DiceTools:
             "dice_type": "d100",
             "count": count
         }
-        print(f"d100 result: {result}")
         return json.dumps(result)
-
 
 def determine_roll(state: DiceRollState) -> DiceRollState:
     """
@@ -183,7 +166,6 @@ def determine_roll(state: DiceRollState) -> DiceRollState:
     ]
     
     response = ollama_agent.get_completion(messages)
-    print(f"Ollama response: {response}")
     
     # Extract JSON from response
     try:
@@ -192,7 +174,6 @@ def determine_roll(state: DiceRollState) -> DiceRollState:
         if json_match:
             json_str = json_match.group(1)
             roll_info = json.loads(json_str)
-            print(f"Extracted roll info: {roll_info}")
             
             state["dice_type"] = roll_info.get("dice_type", "d20")
             state["context"] = roll_info.get("context", "general roll")
@@ -207,10 +188,7 @@ def determine_roll(state: DiceRollState) -> DiceRollState:
                 "tool_args": {"count": count}
             }]
             
-            print(f"Created tool call: {state['tool_calls']}")
-            
         else:
-            print("Could not extract JSON from LLM response")
             # Fallback if JSON parsing fails
             state["dice_type"] = "d20"
             state["context"] = "general roll"
@@ -221,7 +199,6 @@ def determine_roll(state: DiceRollState) -> DiceRollState:
             }]
     
     except Exception as e:
-        print(f"Error parsing LLM response: {e}")
         # Default fallback
         state["dice_type"] = "d20"
         state["context"] = "general roll"
@@ -410,146 +387,178 @@ def format_result(state: DiceRollState) -> DiceRollState:
     
     return state
 
-
-# Example usage as main
-if __name__ == "__main__":
-    # Create an Ollama agent for natural language processing
-    ollama_agent = OllamaAgent(model="llama2")
+def execute_tool(state: DiceRollState) -> DiceRollState:
+    """Execute the appropriate dice tool based on the determined roll."""
+    if not state.get("tool_calls"):
+        return state
     
-    # Create a graph that just uses a direct workflow without ToolNode
-    # This is a simpler approach that will be more reliable
-    workflow = StateGraph(DiceRollState)
+    # Get the first tool call
+    tool_call = state["tool_calls"][0]
+    tool_name = tool_call.get("tool_name")
+    tool_args = tool_call.get("tool_args", {})
     
-    # Add nodes
-    workflow.add_node("determine_roll", determine_roll)
-    workflow.add_node("format_result", format_result)
+    # Map tool names to functions
+    tool_map = {
+        "roll_d2": DiceTools.roll_d2,
+        "roll_d4": DiceTools.roll_d4,
+        "roll_d6": DiceTools.roll_d6,
+        "roll_d8": DiceTools.roll_d8,
+        "roll_d10": DiceTools.roll_d10,
+        "roll_d12": DiceTools.roll_d12,
+        "roll_d20": DiceTools.roll_d20,
+        "roll_d100": DiceTools.roll_d100
+    }
     
-    # Define a custom execute_tool function that directly calls our dice tools
-    def execute_tool(state: DiceRollState) -> DiceRollState:
-        """Execute the appropriate dice tool based on the determined roll."""
-        if not state.get("tool_calls"):
-            print("No tool calls found in state")
-            return state
-        
-        # Get the first tool call
-        tool_call = state["tool_calls"][0]
-        tool_name = tool_call.get("tool_name")
-        tool_args = tool_call.get("tool_args", {})
-        
-        print(f"Executing tool: {tool_name} with args: {tool_args}")
-        
-        # Map tool names to functions
-        tool_map = {
-            "roll_d2": DiceTools.roll_d2,
-            "roll_d4": DiceTools.roll_d4,
-            "roll_d6": DiceTools.roll_d6,
-            "roll_d8": DiceTools.roll_d8,
-            "roll_d10": DiceTools.roll_d10,
-            "roll_d12": DiceTools.roll_d12,
-            "roll_d20": DiceTools.roll_d20,
-            "roll_d100": DiceTools.roll_d100
-        }
-        
-        if tool_name in tool_map:
-            try:
-                # Execute the tool directly as a function
-                tool_func = tool_map[tool_name]
-                count = tool_args.get("count", 1)
-                result_json = tool_func(count=count)
-                
-                # Parse the result
-                result = json.loads(result_json)
-                
-                # Store the result
-                state["tool_results"] = [result]
-                state["roll_result"] = result
-                
-                print(f"Tool execution successful: {result}")
-            except Exception as e:
-                print(f"Error executing tool: {e}")
-                # Set a default result if tool execution fails
-                state["tool_results"] = [{
-                    "rolls": [0],
-                    "total": 0,
-                    "dice_type": state.get("dice_type", "d20"),
-                    "count": tool_args.get("count", 1),
-                    "error": str(e)
-                }]
-        else:
-            print(f"Unknown tool: {tool_name}")
-            # Set a default result for unknown tools
+    if tool_name in tool_map:
+        try:
+            # Execute the tool directly as a function
+            tool_func = tool_map[tool_name]
+            count = tool_args.get("count", 1)
+            result_json = tool_func(count=count)
+            
+            # Parse the result
+            result = json.loads(result_json)
+            
+            # Store the result
+            state["tool_results"] = [result]
+            state["roll_result"] = result
+        except Exception as e:
+            # Set a default result if tool execution fails
             state["tool_results"] = [{
                 "rolls": [0],
                 "total": 0,
                 "dice_type": state.get("dice_type", "d20"),
                 "count": tool_args.get("count", 1),
-                "error": f"Unknown tool: {tool_name}"
+                "error": str(e)
             }]
+    else:
+        # Set a default result for unknown tools
+        state["tool_results"] = [{
+            "rolls": [0],
+            "total": 0,
+            "dice_type": state.get("dice_type", "d20"),
+            "count": tool_args.get("count", 1),
+            "error": f"Unknown tool: {tool_name}"
+        }]
+    
+    return state
+
+# Example usage as main
+if __name__ == "__main__":
+    try:
+        # Create a log file for debugging
+        import logging
+        logging.basicConfig(filename='dnd_dice.log', level=logging.INFO, 
+                           format='%(asctime)s - %(levelname)s - %(message)s')
+        logging.info("Starting D&D Dice Roller")
         
-        return state
-    
-    # Add our custom execute_tool node
-    workflow.add_node("execute_tool", execute_tool)
-    
-    # Create edges for our simplified workflow
-    workflow.set_entry_point("determine_roll")
-    workflow.add_edge("determine_roll", "execute_tool")
-    workflow.add_edge("execute_tool", "format_result")
-    
-    # Set format_result as the finish point
-    workflow.set_finish_point("format_result")
-    
-    # Compile the graph
-    app = workflow.compile()
-    
-    # Run the graph with user prompts
-    print("\nD&D Dice Roller")
-    print("===============")
-    print("Examples:")
-    print("- 'Roll for initiative'")
-    print("- 'I attack the goblin with my longsword'")
-    print("- 'Roll damage for my greataxe'")
-    print("- 'Roll a d20 for perception check'")
-    print("- 'Roll 3d6 for fireball damage'")
-    
-    while True:
-        user_input = input("\nWhat would you like to roll? (or 'exit' to quit): ")
+        # Create an Ollama agent for natural language processing
+        logging.info("Creating Ollama agent")
+        ollama_agent = OllamaAgent(model="llama2")
         
-        if user_input.lower() in ["exit", "quit", "bye"]:
-            print("Farewell, adventurer!")
-            break
+        # Create a graph that just uses a direct workflow without ToolNode
+        logging.info("Creating StateGraph")
+        workflow = StateGraph(DiceRollState)
         
-        initial_state = {
-            "input": user_input,
-            "dice_type": "",
-            "roll_result": None,
-            "context": "",
-            "output": "",
-            "messages": [],
-            "tool_calls": [],
-            "tool_results": []
-        }
+        # Add nodes
+        workflow.add_node("determine_roll", determine_roll)
+        workflow.add_node("execute_tool", execute_tool)
+        workflow.add_node("format_result", format_result)
         
-        result = app.invoke(initial_state)
+        # Create edges for our simplified workflow
+        workflow.set_entry_point("determine_roll")
+        workflow.add_edge("determine_roll", "execute_tool")
+        workflow.add_edge("execute_tool", "format_result")
         
-        # Ensure we have an output to display, even if something went wrong
-        if not result["output"] or result["output"] == "No dice were rolled.":
-            if "roll_result" in result and result["roll_result"]:
-                # We have a result but format_result failed
-                roll_data = result["roll_result"]
-                if isinstance(roll_data, dict):
-                    dice = roll_data.get("dice_type", "?")
-                    rolls = roll_data.get("rolls", [])
-                    total = roll_data.get("total", 0)
-                    print(f"You rolled {dice} and got: {rolls} for a total of {total}")
+        # Set format_result as the finish point
+        workflow.set_finish_point("format_result")
+        
+        # Compile the graph
+        logging.info("Compiling workflow")
+        app = workflow.compile()
+        
+        # Clear terminal and show intro - using simpler ASCII
+        print("\n")  # Skip terminal clear for now
+        print("\n==== D&D Dice Roller ====")
+        print("========================")
+        print("Examples:")
+        print("  * 'Roll for initiative'")
+        print("  * 'I attack the goblin with my longsword'")
+        print("  * 'Roll damage for my greataxe'")
+        print("  * 'Roll a d20 for perception check'")
+        print("  * 'Roll 3d6 for fireball damage'")
+        print("========================")
+        
+        while True:
+            try:
+                user_input = input("\nWhat would you like to roll? (or 'exit' to quit): ")
+                logging.info(f"User input: {user_input}")
+                
+                if user_input.lower() in ["exit", "quit", "bye"]:
+                    print("\nFarewell, adventurer! May your next rolls be criticals.")
+                    logging.info("User exited")
+                    break
+                
+                # Show "rolling" animation
+                import sys
+                import time
+                
+                print("\nRolling", end="", flush=True)
+                for _ in range(3):
+                    time.sleep(0.3)
+                    print(".", end="", flush=True)
+                print("\n")
+                
+                initial_state = {
+                    "input": user_input,
+                    "dice_type": "",
+                    "roll_result": None,
+                    "context": "",
+                    "output": "",
+                    "messages": [],
+                    "tool_calls": [],
+                    "tool_results": []
+                }
+                
+                logging.info("Invoking app")
+                result = app.invoke(initial_state)
+                logging.info(f"Result: {result}")
+                
+                # Ensure we have an output to display, even if something went wrong
+                if not result["output"] or result["output"] == "No dice were rolled.":
+                    if "roll_result" in result and result["roll_result"]:
+                        # We have a result but format_result failed
+                        roll_data = result["roll_result"]
+                        if isinstance(roll_data, dict):
+                            dice = roll_data.get("dice_type", "?")
+                            rolls = roll_data.get("rolls", [])
+                            total = roll_data.get("total", 0)
+                            print(f"You rolled {dice} and got: {rolls} for a total of {total}")
+                        else:
+                            # Just print whatever we have
+                            print(f"Dice roll result: {roll_data}")
+                    else:
+                        # No result at all
+                        print("Sorry, I couldn't roll the dice properly. Please try again with a different wording.")
                 else:
-                    # Just print whatever we have
-                    print(f"Dice roll result: {roll_data}")
-            else:
-                # No result at all
-                print("Sorry, I couldn't roll the dice properly. Please try again with a different wording.")
-        else:
-            # Print the formatted output
-            print(result["output"])
+                    # Print the formatted output
+                    print(f"{result['output']}")
+                    
+            except KeyboardInterrupt:
+                print("\n\nFarewell, adventurer! May your next rolls be criticals.")
+                logging.info("KeyboardInterrupt - User exited")
+                break
+            except Exception as e:
+                logging.exception("Error in main loop")
+                print(f"\nAn error occurred: {e}")
+                print("Please try again.")
+    
+    except Exception as e:
+        import traceback
+        with open('dnd_dice_error.log', 'w') as f:
+            f.write(f"Error starting application: {e}\n")
+            f.write(traceback.format_exc())
+        print(f"Error starting application: {e}")
+        print("Check dnd_dice_error.log for details.")
 
 
