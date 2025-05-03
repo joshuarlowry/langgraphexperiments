@@ -9,6 +9,7 @@ The project is organized into the following modules:
 - **dnddice**: A D&D dice roller with LLM-powered context detection
 - **ollamaAgent**: A client for interacting with Ollama API
 - **topNewsAgent**: An agent that fetches and summarizes top news stories
+- **topNewsAgentCache**: An enhanced version of topNewsAgent with SQLite caching for improved performance
 - **websiteSummarizer**: An agent that summarizes website content
 - **news**: A client for interacting with Hacker News API
 

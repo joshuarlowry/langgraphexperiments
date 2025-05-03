@@ -5,6 +5,7 @@ from ollamaAgent import OllamaAgent
 from dnddice import DiceTools, DiceRollState
 from websiteSummarizer import WebsiteSummarizerAgent
 from topNewsAgent import run_news_workflow
+from topNewsAgentCache import run_cached_news_workflow
 from news.news import run_news
 
 def main():
@@ -14,9 +15,10 @@ def main():
     print("2. Summarize Website (websiteSummarizer)")
     print("3. Top News (topNewsAgent)")
     print("4. Hacker News Browser (news)")
-    print("5. Exit")
+    print("5. Top News with Caching (topNewsAgentCache)")
+    print("6. Exit")
     
-    choice = input("\nEnter your choice (1-5): ")
+    choice = input("\nEnter your choice (1-6): ")
     
     if choice == "1":
         # Example of using DiceTools directly
@@ -34,6 +36,9 @@ def main():
         # Run the hacker news browser
         run_news()
     elif choice == "5":
+        # Run the cached top news workflow
+        run_cached_news_workflow()
+    elif choice == "6":
         print("Goodbye!")
         return
     else:
