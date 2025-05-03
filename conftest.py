@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 import json
 from dnddice import DiceRollState
 import dnddice
+from langgraph.graph import StateGraph
 
 @pytest.fixture
 def empty_state():
@@ -21,7 +22,7 @@ def empty_state():
 @pytest.fixture
 def mock_ollama():
     """Fixture that provides a mocked Ollama agent."""
-    with patch('dnddice.OllamaAgent') as mock:
+    with patch('dnddice.dnddice.OllamaAgent') as mock:
         mock_instance = MagicMock()
         mock_instance.get_completion.return_value = '{"dice_type": "d20", "count": 1, "context": "general roll"}'
         mock.return_value = mock_instance
@@ -36,7 +37,7 @@ def mock_dice_rolls():
 @pytest.fixture
 def test_graph():
     """Fixture that provides a compiled test graph."""
-    workflow = dnddice.StateGraph(DiceRollState)
+    workflow = StateGraph(DiceRollState)
     workflow.add_node("determine_roll", dnddice.determine_roll)
     workflow.add_node("execute_tool", dnddice.execute_tool)
     workflow.add_node("format_result", dnddice.format_result)

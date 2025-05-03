@@ -163,8 +163,8 @@ def display_results(state: SummarizerState) -> SummarizerState:
     return state
 
 
-# Example usage as main
-if __name__ == "__main__":
+def run_summarizer():
+    """Run the website summarizer workflow"""
     # Create agents
     ollama_agent = OllamaAgent(model="llama2")
     summarizer_agent = WebsiteSummarizerAgent(ollama_agent)
@@ -195,3 +195,7 @@ if __name__ == "__main__":
     
     # Run the graph
     app.invoke(initial_state)
+
+
+if __name__ == "__main__":
+    run_summarizer() 

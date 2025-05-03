@@ -257,25 +257,22 @@ def get_user_input(state: NewsState) -> NewsState:
 
 
 def display_results(state: NewsState) -> NewsState:
-    """Display the formatted news results"""
+    """Display the news summary"""
     print("\n" + state["summary"])
     return state
 
 
-# Example usage as main
-if __name__ == "__main__":
-    print("Hacker News Browser")
-    print("==================")
-    
-    # Create a HackerNews agent
-    agent = HackerNewsAgent()
+def run_news():
+    """Run the news browser workflow"""
+    # Create the agent
+    news_agent = HackerNewsAgent()
     
     # Create a graph
     workflow = StateGraph(NewsState)
     
     # Add nodes
     workflow.add_node("get_input", get_user_input)
-    workflow.add_node("fetch_news", agent.langgraph_node())
+    workflow.add_node("fetch_news", news_agent.langgraph_node())
     workflow.add_node("format_news", format_news_data)
     workflow.add_node("display_results", display_results)
     
@@ -299,3 +296,6 @@ if __name__ == "__main__":
     # Run the graph
     app.invoke(initial_state)
 
+
+if __name__ == "__main__":
+    run_news() 

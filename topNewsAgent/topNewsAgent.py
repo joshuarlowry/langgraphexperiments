@@ -122,8 +122,8 @@ def display_results(state: TopNewsState) -> TopNewsState:
     return state
 
 
-# Example usage as main
-if __name__ == "__main__":
+def run_news_workflow():
+    """Run the top news workflow"""
     # Create agents
     news_agent = HackerNewsAgent()
     ollama_agent = OllamaAgent(model="llama2")
@@ -161,3 +161,7 @@ if __name__ == "__main__":
     
     # Run the graph
     app.invoke(initial_state)
+
+
+if __name__ == "__main__":
+    run_news_workflow() 
